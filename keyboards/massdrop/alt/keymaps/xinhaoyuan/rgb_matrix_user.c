@@ -12,7 +12,7 @@ static uint8_t led_boost_index;
 static uint8_t led_cur_index;
 
 #define LED_BOOST_REFRESH_INTERVAL_IN_MS 40
-#define LED_BOOST_DECAY 0.7
+#define LED_BOOST_DECAY 0.8
 #define LED_BOOST_PROPAGATE 0.5
 #define LED_BOOST_PEAK 100
 
@@ -29,7 +29,8 @@ static uint8_t led_cur_index;
 #define MAX_B (MAX_RGB & 0xff)
 
 // #define UNDERGLOW_RGB 0x964400
-#define UNDERGLOW_RGB 0x004f2e
+// #define UNDERGLOW_RGB 0x004f2e
+#define UNDERGLOW_RGB 0x000000
 #define UNDERGLOW_R (UNDERGLOW_RGB >> 16 & 0xff)
 #define UNDERGLOW_G (UNDERGLOW_RGB >> 8 & 0xff)
 #define UNDERGLOW_B (UNDERGLOW_RGB & 0xff)
