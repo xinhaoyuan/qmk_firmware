@@ -40,12 +40,13 @@ static inline int8_t times_inv_sqrt2(int8_t x) {
 static report_mouse_t mouse_report = {0};
 static void           mousekey_debug(void);
 static uint8_t        mousekey_accel        = 0;
-static uint8_t        mousekey_repeat       = 0;
+static uint8_t        mousekey_repeat_x     = 0;
+static uint8_t        mousekey_repeat_y     = 0;
 static uint8_t        mousekey_wheel_repeat = 0;
+static int8_t  mousekey_x_dir     = 0; // -1 / 0 / 1 = left / neutral / right
+static int8_t  mousekey_y_dir     = 0; // -1 / 0 / 0 = up / neutral / d
 #ifdef MOUSEKEY_INERTIA
 static uint8_t mousekey_frame     = 0; // track whether gesture is inactive, first frame, or repeating
-static int8_t  mousekey_x_dir     = 0; // -1 / 0 / 1 = left / neutral / right
-static int8_t  mousekey_y_dir     = 0; // -1 / 0 / 0 = up / neutral / down
 static int8_t  mousekey_x_inertia = 0; // current velocity, limit +/- MOUSEKEY_TIME_TO_MAX
 static int8_t  mousekey_y_inertia = 0; // ...
 #endif
@@ -55,7 +56,8 @@ static uint16_t mouse_timer = 0;
 
 #ifndef MK_3_SPEED
 
-static uint16_t last_timer_c = 0;
+static uint16_t last_timer_x = 0;
+static uint16_t last_timer_y = 0;
 static uint16_t last_timer_w = 0;
 
 /*
@@ -65,7 +67,7 @@ static uint16_t last_timer_w = 0;
  *  speed = delta * max_speed * (repeat / time_to_max)**((1000+curve)/1000)
  */
 /* milliseconds between the initial key press and first repeated motion event (0-2550) */
-uint8_t mk_delay = MOUSEKEY_DELAY / 10;
+uint8_t mk_delay = MOUSEKEY_DELAY;
 /* milliseconds between repeated motion events (0-255) */
 uint8_t mk_interval = MOUSEKEY_INTERVAL;
 /* steady speed (in action_delta units) applied each event (0-255) */
@@ -92,7 +94,7 @@ uint8_t mk_wheel_time_to_max = MOUSEKEY_WHEEL_TIME_TO_MAX;
 
 /* Default accelerated mode */
 
-static uint8_t move_unit(void) {
+static uint8_t move_unit(uint8_t repeat) {
     uint16_t unit;
     if (mousekey_accel & (1 << 0)) {
         unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed) / 4;
@@ -100,12 +102,12 @@ static uint8_t move_unit(void) {
         unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed) / 2;
     } else if (mousekey_accel & (1 << 2)) {
         unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed);
-    } else if (mousekey_repeat == 0) {
+    } else if (repeat == 0) {
         unit = MOUSEKEY_MOVE_DELTA;
-    } else if (mousekey_repeat >= mk_time_to_max) {
+    } else if (repeat >= mk_time_to_max) {
         unit = MOUSEKEY_MOVE_DELTA * mk_max_speed;
     } else {
-        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed * mousekey_repeat) / mk_time_to_max;
+        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed * repeat) / mk_time_to_max;
     }
     return (unit > MOUSEKEY_MOVE_MAX ? MOUSEKEY_MOVE_MAX : (unit == 0 ? 1 : unit));
 }
@@ -339,22 +341,14 @@ void mousekey_task(void) {
 
 #    else // default acceleration
 
-    if ((tmpmr.x || tmpmr.y) && timer_elapsed(last_timer_c) > (mousekey_repeat ? mk_interval : mk_delay * 10)) {
-        if (mousekey_repeat != UINT8_MAX) mousekey_repeat++;
-        if (tmpmr.x != 0) mouse_report.x = move_unit() * ((tmpmr.x > 0) ? 1 : -1);
-        if (tmpmr.y != 0) mouse_report.y = move_unit() * ((tmpmr.y > 0) ? 1 : -1);
+    if (mousekey_x_dir && timer_elapsed(last_timer_x) > (mousekey_repeat_x ? mk_interval : mk_delay)) {
+        if (mousekey_repeat_x != UINT8_MAX) mousekey_repeat_x++;
+        mouse_report.x = move_unit(mousekey_repeat_x) * mousekey_x_dir;
+    }
 
-        /* diagonal move [1/sqrt(2)] */
-        if (mouse_report.x && mouse_report.y) {
-            mouse_report.x = times_inv_sqrt2(mouse_report.x);
-            if (mouse_report.x == 0) {
-                mouse_report.x = 1;
-            }
-            mouse_report.y = times_inv_sqrt2(mouse_report.y);
-            if (mouse_report.y == 0) {
-                mouse_report.y = 1;
-            }
-        }
+    if (mousekey_y_dir && timer_elapsed(last_timer_y) > (mousekey_repeat_y ? mk_interval : mk_delay)) {
+        if (mousekey_repeat_y != UINT8_MAX) mousekey_repeat_y++;
+        mouse_report.y = move_unit(mousekey_repeat_y) * mousekey_y_dir;
     }
 
 #    endif // MOUSEKEY_INERTIA or not
@@ -398,7 +392,7 @@ void mousekey_on(uint8_t code) {
 #        ifdef MK_KINETIC_SPEED
         mouse_timer = timer_read() - MOUSEKEY_OVERLAP_INTERVAL;
 #        else
-        mousekey_repeat       = MOUSEKEY_OVERLAP_MOVE_DELTA;
+        // mousekey_repeat       = MOUSEKEY_OVERLAP_MOVE_DELTA;
         mousekey_wheel_repeat = MOUSEKEY_OVERLAP_WHEEL_DELTA;
 #        endif
     }
@@ -417,14 +411,24 @@ void mousekey_on(uint8_t code) {
 
 #    else // no inertia
 
-    if (code == QK_MOUSE_CURSOR_UP)
-        mouse_report.y = move_unit() * -1;
-    else if (code == QK_MOUSE_CURSOR_DOWN)
-        mouse_report.y = move_unit();
-    else if (code == QK_MOUSE_CURSOR_LEFT)
-        mouse_report.x = move_unit() * -1;
-    else if (code == QK_MOUSE_CURSOR_RIGHT)
-        mouse_report.x = move_unit();
+    mouse_report.x = mouse_report.y = 0;
+    if (code == QK_MOUSE_CURSOR_UP && mousekey_y_dir >= 0) {
+        mousekey_repeat_y = 0;
+        mousekey_y_dir = -1;
+        mouse_report.y = -move_unit(mousekey_repeat_y);
+    } else if (code == QK_MOUSE_CURSOR_DOWN && mousekey_y_dir <= 0) {
+        mousekey_repeat_y = 0;
+        mousekey_y_dir = 1;
+        mouse_report.y = move_unit(mousekey_repeat_y);
+    } else if (code == QK_MOUSE_CURSOR_LEFT && mousekey_x_dir >= 0) {
+        mousekey_repeat_x = 0;
+        mousekey_x_dir = -1;
+        mouse_report.x = -move_unit(mousekey_repeat_x);
+    } else if (code == QK_MOUSE_CURSOR_RIGHT && mousekey_x_dir <= 0) {
+        mousekey_repeat_x = 0;
+        mousekey_x_dir = 1;
+        mouse_report.x = move_unit(mousekey_repeat_x);
+    }
 
 #    endif // inertia or not
 
@@ -461,14 +465,20 @@ void mousekey_off(uint8_t code) {
 
 #    else // no inertia
 
-    if (code == QK_MOUSE_CURSOR_UP && mouse_report.y < 0)
-        mouse_report.y = 0;
-    else if (code == QK_MOUSE_CURSOR_DOWN && mouse_report.y > 0)
-        mouse_report.y = 0;
-    else if (code == QK_MOUSE_CURSOR_LEFT && mouse_report.x < 0)
-        mouse_report.x = 0;
-    else if (code == QK_MOUSE_CURSOR_RIGHT && mouse_report.x > 0)
-        mouse_report.x = 0;
+    mouse_report.x = mouse_report.y = 0;
+    if (code == QK_MOUSE_CURSOR_UP && mousekey_y_dir < 0) {
+        mousekey_y_dir = 0;
+        mousekey_repeat_y = 0;
+    } else if (code == QK_MOUSE_CURSOR_DOWN && mousekey_y_dir > 0) {
+        mousekey_y_dir = 0;
+        mousekey_repeat_y = 0;
+    } else if (code == QK_MOUSE_CURSOR_LEFT && mousekey_x_dir < 0) {
+        mousekey_x_dir = 0;
+        mousekey_repeat_x = 0;
+    } else if (code == QK_MOUSE_CURSOR_RIGHT && mousekey_x_dir > 0) {
+        mousekey_x_dir = 0;
+        mousekey_repeat_x = 0;
+    }
 
 #    endif // inertia or not
 
@@ -488,12 +498,10 @@ void mousekey_off(uint8_t code) {
         mousekey_accel &= ~(1 << 1);
     else if (code == QK_MOUSE_ACCELERATION_2)
         mousekey_accel &= ~(1 << 2);
-    if (mouse_report.x == 0 && mouse_report.y == 0) {
-        mousekey_repeat = 0;
 #    ifdef MK_KINETIC_SPEED
+    if (mouse_report.x == 0 && mouse_report.y == 0)
         mouse_timer = 0;
 #    endif /* #ifdef MK_KINETIC_SPEED */
-    }
     if (mouse_report.v == 0 && mouse_report.h == 0) mousekey_wheel_repeat = 0;
 }
 
@@ -633,22 +641,24 @@ void mousekey_off(uint8_t code) {
 void mousekey_send(void) {
     mousekey_debug();
     uint16_t time = timer_read();
-    if (mouse_report.x || mouse_report.y) last_timer_c = time;
+    if (mouse_report.x) last_timer_x = time;
+    if (mouse_report.y) last_timer_y = time;
     if (mouse_report.v || mouse_report.h) last_timer_w = time;
     host_mouse_send(&mouse_report);
 }
 
 void mousekey_clear(void) {
     mouse_report          = (report_mouse_t){};
-    mousekey_repeat       = 0;
+    mousekey_repeat_x     = 0;
+    mousekey_repeat_y     = 0;
     mousekey_wheel_repeat = 0;
     mousekey_accel        = 0;
+    mousekey_x_dir     = 0;
+    mousekey_y_dir     = 0;
 #ifdef MOUSEKEY_INERTIA
     mousekey_frame     = 0;
     mousekey_x_inertia = 0;
     mousekey_y_inertia = 0;
-    mousekey_x_dir     = 0;
-    mousekey_y_dir     = 0;
 #endif
 }
 
