@@ -1,0 +1,4 @@
+#pragma once
+
+#define RGB_MATRIX_DEFAULT_MODE RGB_MATRIX_SOLID_COLOR
+#define TAPPING_TOGGLE 2
