@@ -3,16 +3,18 @@
 
 #include QMK_KEYBOARD_H
 
-enum tap_dance_keys {
-  L2_THEN_L1 = 0
-};
-
 enum layers {
     BASE = 0,
     FN1 = 1,
     FN2 = 2,
     ARR = 3,
     SYS = 4,
+};
+
+enum custom_keys {
+    _NULLKEY = SAFE_RANGE,
+    MY_FN1,
+    MY_FN2,
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -34,7 +36,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
          KC_TAB,     KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,        KC_Y,     KC_U,       KC_I,     KC_O,        KC_P,     KC_LBRC,  KC_RBRC,   KC_BSLS,
         KC_LCTL,     KC_A,     KC_S,     KC_D,     KC_F,     KC_G,        KC_H,     KC_J,       KC_K,     KC_L,     KC_SCLN,     KC_QUOT,              KC_ENT,
         KC_LSFT,     KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,        KC_N,     KC_M,    KC_COMM,   KC_DOT,     KC_SLSH,               KC_RSFT,
-        MO(FN1),  KC_LGUI,  KC_LALT,             KC_SPC,   KC_SPC,     KC_MUTE,        TD(L2_THEN_L1),  KC_RALT,     KC_APP,     KC_RCTL,             MO(SYS)
+         MY_FN1,  KC_LGUI,  KC_LALT,             KC_SPC,   KC_SPC,     KC_MUTE,               MY_FN2,  KC_RALT,     KC_APP,     KC_RCTL,              MO(SYS)
     ),
 
     [FN1] = LAYOUT_all(
@@ -42,7 +44,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
           KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,       KC_NO,  KC_WH_L,    KC_MS_U,  KC_WH_R,     KC_WH_U,       KC_NO,    KC_NO,     KC_NO,
         _______,    KC_NO,  KC_BTN3,  KC_BTN2,  KC_BTN1,    KC_NO,       KC_NO,  KC_MS_L,    KC_MS_D,  KC_MS_R,     KC_WH_D,      KC_GRV,             _______,
         _______,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,       KC_NO,  KC_BTN1,    KC_BTN2,  KC_BTN3,       KC_NO,               _______,
-        _______,  _______,  _______,            _______,  _______,     _______,              MO(SYS),  _______,     _______,     _______,             _______
+        _______,  _______,  _______,            _______,  _______,     _______,              _______,  _______,     _______,     _______,             _______
     ),
 
     [FN2] = LAYOUT_all(
@@ -80,22 +82,118 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
 };
 #endif
 
-void L2_THEN_L1_finished(tap_dance_state_t *state, void *user_data) {
-  if (state->count == 1) {
-      layer_on(FN2);
-  } else {
-      layer_on(FN1);
-  }
+static int shift_press_count = 0;
+static int space_press_count = 0;
+static int space_hold = 0;
+
+static int layer_lock_count = 0;
+static int locked_layer = 0;
+
+static uint16_t last_pressed_keycode = _NULLKEY;
+static uint16_t last_pressed_time = 0;
+
+static void lock_layer(int num) {
+    space_hold = 0;
+    locked_layer = num;
+    layer_on(num == 1 ? FN1 : FN2);
 }
 
-void L2_THEN_L1_reset(tap_dance_state_t *state, void *user_data) {
-  if (state->count == 1) {
-      layer_off(FN2);
-  } else {
-      layer_off(FN1);
-  }
+static void switch_locked_layer(void) {
+    if (locked_layer == 1) {
+        layer_off(FN1);
+        locked_layer = 2;
+        layer_on(FN2);
+    } else if (locked_layer == 2) {
+        layer_off(FN2);
+        locked_layer = 1;
+        layer_on(FN1);
+    }
 }
 
-tap_dance_action_t tap_dance_actions[] = {
-  [L2_THEN_L1] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, L2_THEN_L1_finished, L2_THEN_L1_reset),
-};
+static void unlock_layer(void) {
+    if (locked_layer) {
+        locked_layer = 0;
+        layer_off(FN1);
+        layer_off(FN2);
+    }
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+#define IS_TAPPING() (last_pressed_keycode == keycode && timer_elapsed(last_pressed_time) < 150)
+    switch (keycode) {
+    case KC_LSFT:
+        if (record->event.pressed) {
+            ++shift_press_count;
+        } else {
+            --shift_press_count;
+            if (IS_TAPPING()) switch_locked_layer();
+            if (layer_lock_count > 0 && !locked_layer) lock_layer(1);
+        }
+        return true;
+    case KC_RSFT:
+        if (record->event.pressed) {
+            ++shift_press_count;
+        } else {
+            --shift_press_count;
+            if (IS_TAPPING()) switch_locked_layer();
+            if (layer_lock_count > 0 && !locked_layer) lock_layer(2);
+        }
+        return true;
+    case KC_SPACE:
+        if (record->event.pressed) {
+            ++layer_lock_count;
+            ++space_press_count;
+            if (space_press_count == 1 && shift_press_count >= 1 && !space_hold) {
+                space_hold = 1;
+                return false;
+            }
+            if (locked_layer) return false;
+        } else {
+            --layer_lock_count;
+            --space_press_count;
+            if (layer_lock_count == 0) {
+                unlock_layer();
+                if (space_hold) {
+                    space_hold = 0;
+                    register_code(KC_SPACE);
+                }
+            }
+            if (locked_layer) return false;
+        }
+        return true;
+    case MY_FN1:
+        if (record->event.pressed) {
+            ++layer_lock_count;
+            if (layer_lock_count == 1) lock_layer(1);
+        } else {
+            --layer_lock_count;
+            if (layer_lock_count == 0) {
+                unlock_layer();
+            }
+        }
+        return false;
+    case MY_FN2:
+        if (record->event.pressed) {
+            ++layer_lock_count;
+            if (layer_lock_count == 1) lock_layer(2);
+        } else {
+            --layer_lock_count;
+            if (layer_lock_count == 0) {
+                unlock_layer();
+            }
+        }
+        return false;
+    default:
+        return true; // Process all other keycodes normally
+    }
+#undef IS_TAPPING
+}
+
+void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (record->event.pressed) {
+        last_pressed_keycode = keycode;
+        last_pressed_time = timer_read();
+    } else {
+        last_pressed_keycode = _NULLKEY;
+    }
+}
