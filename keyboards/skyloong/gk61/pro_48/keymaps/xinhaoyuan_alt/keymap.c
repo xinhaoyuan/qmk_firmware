@@ -93,6 +93,7 @@ static uint16_t last_pressed_keycode = _NULLKEY;
 static uint16_t last_pressed_time = 0;
 
 static void lock_layer(int num) {
+    if (locked_layer) return;
     space_hold = 0;
     locked_layer = num;
     layer_on(num == 1 ? FN1 : FN2);
@@ -111,11 +112,10 @@ static void switch_locked_layer(void) {
 }
 
 static void unlock_layer(void) {
-    if (locked_layer) {
-        locked_layer = 0;
-        layer_off(FN1);
-        layer_off(FN2);
-    }
+    if (!locked_layer) return;
+    locked_layer = 0;
+    layer_off(FN1);
+    layer_off(FN2);
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -127,7 +127,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         } else {
             --shift_press_count;
             if (IS_TAPPING()) switch_locked_layer();
-            if (layer_lock_count > 0 && !locked_layer) lock_layer(1);
+            if (layer_lock_count > 0) lock_layer(1);
         }
         return true;
     case KC_RSFT:
@@ -136,7 +136,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         } else {
             --shift_press_count;
             if (IS_TAPPING()) switch_locked_layer();
-            if (layer_lock_count > 0 && !locked_layer) lock_layer(2);
+            if (layer_lock_count > 0) lock_layer(2);
         }
         return true;
     case KC_SPACE:
@@ -164,7 +164,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     case MY_FN1:
         if (record->event.pressed) {
             ++layer_lock_count;
-            if (layer_lock_count == 1) lock_layer(1);
+            lock_layer(1);
         } else {
             --layer_lock_count;
             if (layer_lock_count == 0) {
@@ -175,7 +175,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     case MY_FN2:
         if (record->event.pressed) {
             ++layer_lock_count;
-            if (layer_lock_count == 1) lock_layer(2);
+            lock_layer(2);
         } else {
             --layer_lock_count;
             if (layer_lock_count == 0) {
