@@ -675,7 +675,9 @@ static void mousekey_debug(void) {
     print(" ");
     print_decs(mouse_report.h);
     print("](");
-    print_dec(mousekey_repeat);
+    print_dec(mousekey_repeat_x);
+    print(",");
+    print_dec(mousekey_repeat_y);
     print("/");
     print_dec(mousekey_accel);
     print(")\n");
