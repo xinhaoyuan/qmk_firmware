@@ -413,21 +413,29 @@ void mousekey_on(uint8_t code) {
 
     mouse_report.x = mouse_report.y = 0;
     if (code == QK_MOUSE_CURSOR_UP && mousekey_y_dir >= 0) {
-        mousekey_repeat_y = 0;
         mousekey_y_dir = -1;
-        mouse_report.y = -move_unit(mousekey_repeat_y);
-    } else if (code == QK_MOUSE_CURSOR_DOWN && mousekey_y_dir <= 0) {
+        mousekey_repeat_x = 0;
         mousekey_repeat_y = 0;
+        mouse_report.x = move_unit(mousekey_repeat_x) * mousekey_x_dir;
+        mouse_report.y = move_unit(mousekey_repeat_y) * mousekey_y_dir;
+    } else if (code == QK_MOUSE_CURSOR_DOWN && mousekey_y_dir <= 0) {
         mousekey_y_dir = 1;
-        mouse_report.y = move_unit(mousekey_repeat_y);
+        mousekey_repeat_x = 0;
+        mousekey_repeat_y = 0;
+        mouse_report.x = move_unit(mousekey_repeat_x) * mousekey_x_dir;
+        mouse_report.y = move_unit(mousekey_repeat_y) * mousekey_y_dir;
     } else if (code == QK_MOUSE_CURSOR_LEFT && mousekey_x_dir >= 0) {
-        mousekey_repeat_x = 0;
         mousekey_x_dir = -1;
-        mouse_report.x = -move_unit(mousekey_repeat_x);
-    } else if (code == QK_MOUSE_CURSOR_RIGHT && mousekey_x_dir <= 0) {
         mousekey_repeat_x = 0;
+        mousekey_repeat_y = 0;
+        mouse_report.x = move_unit(mousekey_repeat_x) * mousekey_x_dir;
+        mouse_report.y = move_unit(mousekey_repeat_y) * mousekey_y_dir;
+    } else if (code == QK_MOUSE_CURSOR_RIGHT && mousekey_x_dir <= 0) {
         mousekey_x_dir = 1;
-        mouse_report.x = move_unit(mousekey_repeat_x);
+        mousekey_repeat_x = 0;
+        mousekey_repeat_y = 0;
+        mouse_report.x = move_unit(mousekey_repeat_x) * mousekey_x_dir;
+        mouse_report.y = move_unit(mousekey_repeat_y) * mousekey_y_dir;
     }
 
 #    endif // inertia or not
@@ -468,16 +476,20 @@ void mousekey_off(uint8_t code) {
     mouse_report.x = mouse_report.y = 0;
     if (code == QK_MOUSE_CURSOR_UP && mousekey_y_dir < 0) {
         mousekey_y_dir = 0;
+        mousekey_repeat_x = 0;
         mousekey_repeat_y = 0;
     } else if (code == QK_MOUSE_CURSOR_DOWN && mousekey_y_dir > 0) {
         mousekey_y_dir = 0;
+        mousekey_repeat_x = 0;
         mousekey_repeat_y = 0;
     } else if (code == QK_MOUSE_CURSOR_LEFT && mousekey_x_dir < 0) {
         mousekey_x_dir = 0;
         mousekey_repeat_x = 0;
+        mousekey_repeat_y = 0;
     } else if (code == QK_MOUSE_CURSOR_RIGHT && mousekey_x_dir > 0) {
         mousekey_x_dir = 0;
         mousekey_repeat_x = 0;
+        mousekey_repeat_y = 0;
     }
 
 #    endif // inertia or not
