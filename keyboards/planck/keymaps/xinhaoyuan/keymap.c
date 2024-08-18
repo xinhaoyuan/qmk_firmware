@@ -89,7 +89,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [L_PARA] = LAYOUT_planck_grid(
         KC_NO,   RGB_HUI, RGB_SAI, RGB_VAI, KC_NO,   KC_VOLU, LPTOGG,  KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
         _______, RGB_HUD, RGB_SAD, RGB_VAD, KC_NO,   KC_VOLD, LPSWCH,  KC_NO,   KC_NO,   KC_NO,   KC_NO,   _______,
-        _______, RGB_TOG, RGB_M_P, KC_NO,   KC_NO,   KC_MUTE, KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   _______,
+        _______, RGB_TOG, RGB_M_P, KC_NO,   KC_NO,   KC_MUTE, KC_CAPS, KC_NO,   KC_NO,   KC_NO,   KC_NO,   _______,
         _______, QK_BOOT, _______, _______, _______, KC_NO,   KC_NO,   _______, _______, _______, KC_NO,   _______
     ),
 
