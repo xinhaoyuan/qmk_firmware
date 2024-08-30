@@ -17,4 +17,3 @@
 #pragma once
 
 #define HOLD_ON_OTHER_KEY_PRESS
-#define BOTH_SHIFTS_TURNS_ON_CAPS_WORD
