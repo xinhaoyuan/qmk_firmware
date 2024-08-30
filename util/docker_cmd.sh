@@ -69,9 +69,11 @@ fi
 	$uid_arg \
 	-w /qmk_firmware \
 	-v "$qmk_firmware_dir":/qmk_firmware:z \
+	-v /media:/media \
 	$userspace_docker_args \
 	-e SKIP_GIT="$SKIP_GIT" \
 	-e SKIP_VERSION="$SKIP_VERSION" \
 	-e MAKEFLAGS="$MAKEFLAGS" \
+	-e USER="$USER" \
 	ghcr.io/qmk/qmk_cli \
 	"$@"
