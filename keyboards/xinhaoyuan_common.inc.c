@@ -6,6 +6,7 @@ enum layers {
     L_P_MOUSE,
     L_P_ARROW,
     L_PARA,
+    L__END,
 };
 
 enum keycodes {
@@ -18,8 +19,6 @@ enum keycodes {
     AMTOGG,  // ALTMOD
 };
 
-static int layer_lock_count = 0;
-
 static uint16_t pressed_keycode = KC_NO;
 static uint16_t pressed_time = 0;
 static uint16_t last_pressed_keycode = KC_NO;
@@ -29,6 +28,10 @@ static uint16_t last_tapped_count = 0;
 static bool    my_alt_mod_enabled = 0;
 static uint8_t my_mod_mask = 0;
 static uint8_t my_alt_mod_mask = 0;
+// MetaMod: lower and raise
+static uint8_t mm_press_count[2] = {0};
+static uint8_t mm_layer[2] = {0};
+static uint8_t mm_layer_ref[L__END] = {0};
 
 static void clean_up_oneshot(void) {
     uint8_t mods;
@@ -39,41 +42,40 @@ static void clean_up_oneshot(void) {
 }
 
 #define ALWAYS_SET_LAYER 1
-#define IN_MOD() (layer_state_is(L_LOWER) || layer_state_is(L_RAISE))
+#define IN_LOWER_OR_RAISE() (layer_state_is(L_LOWER) || layer_state_is(L_RAISE))
 
-static void layer_lock(int layer) {
-    ++layer_lock_count;
-    if (ALWAYS_SET_LAYER || layer_lock_count == 1) {
-        clean_up_oneshot();
-        layer_on(layer);
-    }
-    if (layer_lock_count > 1) {
+static void mm_register_layer(int layer) {
+    if (++mm_layer_ref[layer] == 1) layer_on(layer);
+}
+
+static void mm_unregister_layer(int layer) {
+    if (--mm_layer_ref[layer] == 0) layer_off(layer);
+}
+
+static void update_para_layer(void) {
+    if (mm_layer_ref[L_PARA] > 0 || (mm_layer_ref[L_LOWER] > 0 && mm_layer_ref[L_RAISE] > 0 )) {
         layer_on(L_PARA);
+    } else {
+        layer_off(L_PARA);
     }
 }
 
-static void layer_unlock(int layer) {
-    --layer_lock_count;
-    if (ALWAYS_SET_LAYER && layer > 0) {
-        layer_off(layer);
+static void mm_register(int index, int layer) {
+    clean_up_oneshot();
+    if (++mm_press_count[index] == 1 || layer > 0) {
+        if (mm_layer[index] > 0) mm_unregister_layer(mm_layer[index]);
+        mm_layer[index] = layer;
+        mm_register_layer(layer);
     }
-    if (layer_lock_count == 0) {
-        layer_off(L_LOWER);
-        layer_off(L_RAISE);
-        layer_off(L_MOUSE);
-    }
-    layer_off(L_PARA);
+    update_para_layer();
 }
 
-static __attribute__((unused)) void switch_layer_lock(void) {
-    if (layer_lock_count != 1) return;
-    if (layer_state_is(L_LOWER)) {
-        layer_off(L_LOWER);
-        layer_on(L_RAISE);
-    } else if (layer_state_is(L_RAISE)) {
-        layer_off(L_RAISE);
-        layer_on(L_LOWER);
+static void mm_unregister(int index) {
+    if (--mm_press_count[index] == 0 && mm_layer[index] > 0) {
+        mm_unregister_layer(mm_layer[index]);
+        mm_layer[index] = 0;
     }
+    update_para_layer();
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -108,7 +110,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 #define HANDLE_MOD(ALT_KEY)                                             \
     do {                                                                \
         if (record->event.pressed) {                                    \
-            if (IN_MOD()) {                                             \
+            if (IN_LOWER_OR_RAISE()) {                                  \
                 if ((get_oneshot_mods() & MOD_BIT(keycode)) == 0) {     \
                     add_oneshot_mods(MOD_BIT(keycode));                 \
                     add_mods(MOD_BIT(keycode));                         \
@@ -151,10 +153,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (llast_pressed_keycode == keycode &&                     \
                 (last_pressed_keycode == LOWER ||                       \
                  last_pressed_keycode == RAISE)) {                      \
-                layer_unlock(0);                                        \
+                mm_unregister(last_pressed_keycode == LOWER ? 0 : 1);   \
                 register_code(KC_F24);                                  \
                 unregister_code(KC_F24);                                \
-                layer_lock(L);                                          \
+                mm_register(last_pressed_keycode == LOWER ? 0 : 1, L);  \
             }                                                           \
         }                                                               \
     } while (0)
@@ -163,23 +165,23 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     case LOWER:
         if (record->event.pressed) {
             if (last_tapped_keycode == keycode)  {
-                layer_lock(last_tapped_count == 1 ? L_RAISE : L_PARA);
+                mm_register(0, last_tapped_count == 1 ? L_RAISE : L_PARA);
             } else {
-                layer_lock(L_LOWER);
+                mm_register(0, L_LOWER);
             }
         } else {
-                layer_unlock(L_LOWER);
+                mm_unregister(0);
         }
         return false;
     case RAISE:
         if (record->event.pressed) {
             if (last_tapped_keycode == keycode)  {
-                layer_lock(last_tapped_count == 1 ? L_LOWER : L_PARA);
+                mm_register(1, last_tapped_count == 1 ? L_LOWER : L_PARA);
             } else {
-                layer_lock(L_RAISE);
+                mm_register(1, L_RAISE);
             }
         } else {
-            layer_unlock(L_RAISE);
+            mm_unregister(1);
         }
         return false;
     case MY_LGUI:
