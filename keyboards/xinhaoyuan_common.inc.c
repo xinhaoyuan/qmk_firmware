@@ -70,6 +70,10 @@ static void mm_register(int index, int layer) {
     update_para_layer();
 }
 
+static void mm_register_weak(int index, int layer) {
+    mm_register(index, mm_layer[index] == 0 ? layer : mm_layer[index]);
+}
+
 static void mm_unregister(int index) {
     if (--mm_press_count[index] == 0 && mm_layer[index] > 0) {
         mm_unregister_layer(mm_layer[index]);
@@ -167,7 +171,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (last_tapped_keycode == keycode)  {
                 mm_register(0, last_tapped_count == 1 ? L_RAISE : L_PARA);
             } else {
-                mm_register(0, L_LOWER);
+                mm_register_weak(0, L_LOWER);
             }
         } else {
                 mm_unregister(0);
@@ -178,7 +182,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (last_tapped_keycode == keycode)  {
                 mm_register(1, last_tapped_count == 1 ? L_LOWER : L_PARA);
             } else {
-                mm_register(1, L_RAISE);
+                mm_register_weak(1, L_RAISE);
             }
         } else {
             mm_unregister(1);
@@ -199,27 +203,29 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         }
         return false;
     case KC_LCTL:
+        HANDLE_ZIG_LAYER(L_MOUSE);
         HANDLE_MOD(KC_LGUI);
-        break;
-    case KC_RCTL:
-        HANDLE_MOD(KC_RGUI);
         break;
     case KC_LALT:
         HANDLE_MOD(KC_LSFT);
+        break;
+    case KC_LGUI:
+        HANDLE_MOD(KC_LCTL);
+        break;
+    case KC_LSFT:
+        HANDLE_ZIG_LAYER(L_MOUSE);
+        HANDLE_MOD(KC_LALT);
+        break;
+    case KC_RCTL:
+        HANDLE_MOD(KC_RGUI);
         break;
     case KC_RALT:
         HANDLE_ZIG_LAYER(L_MOUSE);
         HANDLE_MOD(KC_RSFT);
         break;
-    case KC_LGUI:
-        HANDLE_MOD(KC_LCTL);
-        break;
     case KC_RGUI:
-        HANDLE_MOD(KC_RCTL);
-        break;
-    case KC_LSFT:
         HANDLE_ZIG_LAYER(L_MOUSE);
-        HANDLE_MOD(KC_LALT);
+        HANDLE_MOD(KC_RCTL);
         break;
     case KC_RSFT:
         HANDLE_MOD(KC_RALT);
