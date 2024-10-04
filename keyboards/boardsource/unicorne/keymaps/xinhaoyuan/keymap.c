@@ -48,9 +48,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 
     [L_PARA] = _LAYOUT(
-        QK_BOOT, UG_HUEU, UG_SATU, UG_VALU, KC_NO,   KC_VOLU, LPTOGG,  KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
+        KC_NO,   UG_HUEU, UG_SATU, UG_VALU, KC_NO,   KC_VOLU, LPTOGG,  KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
         _______, UG_HUED, UG_SATD, UG_VALD, KC_NO,   KC_VOLD, LPSWCH,  KC_NO,   KC_NO,   KC_NO,   KC_NO,   _______,
-        _______, UG_TOGG, RGB_M_P, UG_NEXT, KC_CAPS, KC_MUTE, KC_NO,   AMTOGG,  KC_NO,   KC_NO,   KC_NO,   _______,
+        _______, UG_TOGG, RGB_M_P, UG_NEXT, KC_CAPS, KC_MUTE, OMTOGG,  AMTOGG,  KC_NO,   KC_NO,   KC_NO,   _______,
                                    _______, _______, KC_NO,   KC_NO,   _______, _______
     ),
 };
