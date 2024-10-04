@@ -16,7 +16,8 @@ enum keycodes {
     MY_RCTL,
     LPSWCH,
     LPTOGG,
-    AMTOGG,  // ALTMOD
+    AMTOGG,  // Alternative Mod
+    OMTOGG,  // Oneshot Mod
 };
 
 static uint16_t pressed_keycode = KC_NO;
@@ -26,6 +27,7 @@ static uint16_t last_pressed_time = 0;
 static uint16_t last_tapped_keycode = KC_NO;
 static uint16_t last_tapped_count = 0;
 static bool    my_alt_mod_enabled = 0;
+static bool    my_oneshot_mod_enabled = 0;
 static uint8_t my_mod_mask = 0;
 static uint8_t my_alt_mod_mask = 0;
 // MetaMod: lower and raise
@@ -49,11 +51,13 @@ static void mm_register_layer(int layer) {
 }
 
 static void mm_unregister_layer(int layer) {
+    if (mm_layer_ref[layer] == 0) return;
     if (--mm_layer_ref[layer] == 0) layer_off(layer);
 }
 
 static void update_para_layer(void) {
     if (mm_layer_ref[L_PARA] > 0 || (mm_layer_ref[L_LOWER] > 0 && mm_layer_ref[L_RAISE] > 0 )) {
+        clean_up_oneshot();
         layer_on(L_PARA);
     } else {
         layer_off(L_PARA);
@@ -61,7 +65,6 @@ static void update_para_layer(void) {
 }
 
 static void mm_register(int index, int layer) {
-    clean_up_oneshot();
     if (++mm_press_count[index] == 1 || layer > 0) {
         if (mm_layer[index] > 0) mm_unregister_layer(mm_layer[index]);
         mm_layer[index] = layer;
@@ -75,6 +78,7 @@ static void mm_register_weak(int index, int layer) {
 }
 
 static void mm_unregister(int index) {
+    if (mm_press_count[index] == 0) return;
     if (--mm_press_count[index] == 0 && mm_layer[index] > 0) {
         mm_unregister_layer(mm_layer[index]);
         mm_layer[index] = 0;
@@ -114,7 +118,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 #define HANDLE_MOD(ALT_KEY)                                             \
     do {                                                                \
         if (record->event.pressed) {                                    \
-            if (IN_LOWER_OR_RAISE()) {                                  \
+            if (my_oneshot_mod_enabled && IN_LOWER_OR_RAISE()) {        \
                 if ((get_oneshot_mods() & MOD_BIT(keycode)) == 0) {     \
                     add_oneshot_mods(MOD_BIT(keycode));                 \
                     add_mods(MOD_BIT(keycode));                         \
@@ -168,19 +172,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
     case LOWER:
         if (record->event.pressed) {
-            if (last_tapped_keycode == keycode)  {
-                mm_register(0, last_tapped_count == 1 ? L_RAISE : L_PARA);
+            if (my_alt_mod_enabled && last_tapped_keycode == keycode)  {
+                mm_register(0, L_RAISE);
             } else {
                 mm_register_weak(0, L_LOWER);
             }
         } else {
-                mm_unregister(0);
+            mm_unregister(0);
         }
         return false;
     case RAISE:
         if (record->event.pressed) {
-            if (last_tapped_keycode == keycode)  {
-                mm_register(1, last_tapped_count == 1 ? L_LOWER : L_PARA);
+            if (my_alt_mod_enabled && last_tapped_keycode == keycode)  {
+                mm_register(1, L_LOWER);
             } else {
                 mm_register_weak(1, L_RAISE);
             }
@@ -213,14 +217,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         HANDLE_MOD(KC_LCTL);
         break;
     case KC_LSFT:
-        HANDLE_ZIG_LAYER(L_MOUSE);
+        HANDLE_ZIG_LAYER(L_PARA);
         HANDLE_MOD(KC_LALT);
         break;
     case KC_RCTL:
         HANDLE_MOD(KC_RGUI);
         break;
     case KC_RALT:
-        HANDLE_ZIG_LAYER(L_MOUSE);
+        HANDLE_ZIG_LAYER(L_PARA);
         HANDLE_MOD(KC_RSFT);
         break;
     case KC_RGUI:
@@ -253,6 +257,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return false;
     case AMTOGG:
         if (record->event.pressed) my_alt_mod_enabled = !my_alt_mod_enabled;
+        return false;
+    case OMTOGG:
+        if (record->event.pressed) my_oneshot_mod_enabled = !my_oneshot_mod_enabled;
         return false;
     }
     return true;
