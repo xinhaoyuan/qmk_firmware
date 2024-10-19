@@ -232,6 +232,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         HANDLE_MOD(KC_RCTL);
         break;
     case KC_RSFT:
+        HANDLE_ZIG_LAYER(L_MOUSE);
         HANDLE_MOD(KC_RALT);
         break;
     case LPSWCH:
