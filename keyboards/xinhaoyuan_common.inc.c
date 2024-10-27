@@ -12,8 +12,14 @@ enum layers {
 enum keycodes {
     LOWER = SAFE_RANGE,
     RAISE,
+    MY_LCTL,
     MY_LGUI,
+    MY_LALT,
+    MY_LSFT,
     MY_RCTL,
+    MY_RGUI,
+    MY_RALT,
+    MY_RSFT,
     LPSWCH,
     LPTOGG,
     AMTOGG,  // Alternative Mod
@@ -169,6 +175,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         }                                                               \
     } while (0)
 
+#define HANDLE_MY_MOD(NAME)                         \
+    case MY_##NAME:                                 \
+        if (record->event.pressed) {                \
+            register_mods(MOD_BIT(KC_##NAME));      \
+        } else {                                    \
+            unregister_mods(MOD_BIT(KC_##NAME));    \
+        }                                           \
+        return false
+
     switch (keycode) {
     case LOWER:
         if (record->event.pressed) {
@@ -192,20 +207,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             mm_unregister(1);
         }
         return false;
-    case MY_LGUI:
-        if (record->event.pressed) {
-            register_mods(MOD_BIT(KC_LGUI));
-        } else {
-            unregister_mods(MOD_BIT(KC_LGUI));
-        }
-        return false;
-    case MY_RCTL:
-        if (record->event.pressed) {
-            register_mods(MOD_BIT(KC_RCTL));
-        } else {
-            unregister_mods(MOD_BIT(KC_RCTL));
-        }
-        return false;
+    HANDLE_MY_MOD(LCTL);
+    HANDLE_MY_MOD(LGUI);
+    HANDLE_MY_MOD(LALT);
+    HANDLE_MY_MOD(LSFT);
+    HANDLE_MY_MOD(RCTL);
+    HANDLE_MY_MOD(RGUI);
+    HANDLE_MY_MOD(RALT);
+    HANDLE_MY_MOD(RSFT);
     case KC_LCTL:
         HANDLE_ZIG_LAYER(L_MOUSE);
         HANDLE_MOD(KC_LGUI);
