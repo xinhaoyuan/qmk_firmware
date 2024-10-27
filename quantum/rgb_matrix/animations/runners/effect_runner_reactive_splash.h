@@ -8,6 +8,7 @@ bool effect_runner_reactive_splash(uint8_t start, effect_params_t* params, react
     RGB_MATRIX_USE_LIMITS(led_min, led_max);
 
     uint8_t count = g_last_hit_tracker.count;
+    const uint8_t base = rgb_matrix_config.hsv.v >> 2;
     for (uint8_t i = led_min; i < led_max; i++) {
         RGB_MATRIX_TEST_LED_FLAGS();
         hsv_t hsv = rgb_matrix_config.hsv;
@@ -19,7 +20,7 @@ bool effect_runner_reactive_splash(uint8_t start, effect_params_t* params, react
             uint16_t tick = scale16by8(g_last_hit_tracker.tick[j], qadd8(rgb_matrix_config.speed, 1));
             hsv           = effect_func(hsv, dx, dy, dist, tick);
         }
-        hsv.v     = scale8(255 - hsv.v, rgb_matrix_config.hsv.v);
+        hsv.v     = base + scale8(255 - hsv.v, rgb_matrix_config.hsv.v - base);
         rgb_t rgb = rgb_matrix_hsv_to_rgb(hsv);
         rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
     }
