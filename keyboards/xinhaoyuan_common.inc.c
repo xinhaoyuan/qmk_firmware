@@ -3,11 +3,14 @@ enum layers {
     L_LOWER,
     L_RAISE,
     L_MOUSE,
-    L_P_MOUSE,
-    L_P_ARROW,
+    L_P1,
+    L_P2,
     L_PARA,
     L__END,
 };
+
+#define L_P_START L_P1
+#define L_P_END L_P2
 
 enum keycodes {
     LOWER = SAFE_RANGE,
@@ -20,7 +23,7 @@ enum keycodes {
     MY_RGUI,
     MY_RALT,
     MY_RSFT,
-    LPSWCH,
+    LPNEXT,
     LPTOGG,
     AMTOGG,  // Alternative Mod
     OMTOGG,  // Oneshot Mod
@@ -36,6 +39,7 @@ static bool    my_alt_mod_enabled = 0;
 static bool    my_oneshot_mod_enabled = 0;
 static uint8_t my_mod_mask = 0;
 static uint8_t my_alt_mod_mask = 0;
+static uint8_t my_lp_index = 0;
 // MetaMod: lower and raise
 static uint8_t mm_press_count[2] = {0};
 static uint8_t mm_layer[2] = {0};
@@ -244,24 +248,23 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         HANDLE_ZIG_LAYER(L_MOUSE);
         HANDLE_MOD(KC_RALT);
         break;
-    case LPSWCH:
+    case LPNEXT:
         if (record->event.pressed) {
-            if (layer_state_is(L_P_MOUSE)) {
-                layer_off(L_P_MOUSE);
-                layer_on(L_P_ARROW);
-            } else {
-                layer_off(L_P_ARROW);
-                layer_on(L_P_MOUSE);
+            if (my_lp_index <= L_P_END - L_P_START) {
+                if (my_lp_index > 0) layer_off(L_P_START + my_lp_index - 1);
+                layer_on(L_P_START + my_lp_index);
+                ++my_lp_index;
             }
         }
         return false;
     case LPTOGG:
         if (record->event.pressed) {
-            if (layer_state_is(L_P_ARROW) || layer_state_is(L_P_MOUSE)) {
-                layer_off(L_P_ARROW);
-                layer_off(L_P_MOUSE);
+            if (my_lp_index == 0) {
+                my_lp_index = 1;
+                layer_on(L_P_START);
             } else {
-                layer_on(L_P_ARROW);
+                layer_off(L_P_START + my_lp_index - 1);
+                my_lp_index = 0;
             }
         }
         return false;
