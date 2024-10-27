@@ -27,29 +27,22 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 
     [L_MOUSE] = _LAYOUT(
-        KC_NO,   KC_WH_U, KC_WH_L, KC_MS_U, KC_WH_R, KC_NO,                     KC_NO,   KC_WH_L, KC_MS_U, KC_WH_R, KC_WH_U, KC_NO,
-        _______, KC_WH_D, KC_MS_L, KC_MS_D, KC_MS_R, KC_NO,                     KC_NO,   KC_MS_L, KC_MS_D, KC_MS_R, KC_WH_D, _______,
+        KC_NO,   KC_PGUP, KC_HOME, KC_UP,   KC_END,  KC_NO,                     KC_NO,   KC_WH_L, KC_MS_U, KC_WH_R, KC_WH_U, KC_NO,
+        _______, KC_PGDN, KC_LEFT, KC_DOWN, KC_RGHT, KC_NO,                     KC_NO,   KC_MS_L, KC_MS_D, KC_MS_R, KC_WH_D, _______,
         _______, KC_NO,   KC_BTN3, KC_BTN2, KC_BTN1, KC_NO,   _______, _______, KC_NO,   KC_BTN1, KC_BTN2, KC_BTN3, KC_NO,   _______,
                                             _______, _______, KC_NO,   KC_NO,   _______, _______
     ),
 
-    [L_P_MOUSE] = _LAYOUT(
-        LPSWCH,  KC_WH_U, KC_WH_L, KC_MS_U, KC_WH_R, KC_NO,                     KC_NO,   KC_WH_L, KC_MS_U, KC_WH_R, KC_WH_U, LPSWCH,
-        _______, KC_WH_D, KC_MS_L, KC_MS_D, KC_MS_R, KC_NO,                     KC_NO,   KC_MS_L, KC_MS_D, KC_MS_R, KC_WH_D, _______,
+    [L_P1] = _LAYOUT(
+        LPTOGG,  KC_PGUP, KC_HOME, KC_UP,   KC_END,  KC_NO,                     KC_NO,   KC_WH_L, KC_MS_U, KC_WH_R, KC_WH_U, LPTOGG,
+        _______, KC_PGDN, KC_LEFT, KC_DOWN, KC_RGHT, KC_NO,                     KC_NO,   KC_MS_L, KC_MS_D, KC_MS_R, KC_WH_D, _______,
         _______, KC_NO,   KC_BTN3, KC_BTN2, KC_BTN1, KC_NO,   _______, _______, KC_NO,   KC_BTN1, KC_BTN2, KC_BTN3, KC_NO,   _______,
-                                            LPTOGG,  _______, KC_NO,   KC_NO,   _______, LPTOGG
-    ),
-
-    [L_P_ARROW] = _LAYOUT(
-        LPSWCH,  KC_PGUP, KC_HOME, KC_UP,   KC_END,  KC_NO,                     KC_NO,   KC_HOME, KC_UP,   KC_END,  KC_PGUP, LPSWCH,
-        _______, KC_PGDN, KC_LEFT, KC_DOWN, KC_RGHT, KC_NO,                     KC_NO,   KC_LEFT, KC_DOWN, KC_RGHT, KC_PGDN, _______,
-        _______, KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   _______, _______, KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   _______,
-                                            LPTOGG,  _______, KC_NO,   KC_NO,   _______, LPTOGG
+                                            _______, _______, KC_NO,   KC_NO,   _______, _______
     ),
 
     [L_PARA] = _LAYOUT(
         KC_NO,   UG_HUEU, UG_SATU, UG_VALU, KC_NO,   KC_VOLU,                   LPTOGG,  KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
-        _______, UG_HUED, UG_SATD, UG_VALD, KC_NO,   KC_VOLD,                   LPSWCH,  KC_NO,   KC_NO,   KC_NO,   KC_NO,   _______,
+        _______, UG_HUED, UG_SATD, UG_VALD, KC_NO,   KC_VOLD,                   KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   _______,
         _______, UG_TOGG, RGB_M_P, UG_NEXT, KC_CAPS, KC_MUTE, _______, _______, OMTOGG,  AMTOGG,  KC_NO,   KC_NO,   KC_NO,   _______,
                                             _______, _______, KC_NO,   KC_NO,   _______, _______
     ),
