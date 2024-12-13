@@ -16,7 +16,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [L_LOWER] = _LAYOUT(
         KC_ESC,  KC_EXLM, KC_AT,   KC_HASH, KC_DLR,  KC_PERC, KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, KC_RPRN, KC_DEL,
         _______, KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    _______,
-        _______, KC_GRV,  KC_LBRC, KC_RBRC, MY_LALT, MY_LGUI, KC_NO,   KC_QUOT, KC_MINS, KC_EQL,  KC_BSLS, _______,
+        _______, KC_GRV,  KC_LBRC, KC_RBRC, MY_LALT, MY_LGUI, CW_TOGG, KC_QUOT, KC_MINS, KC_EQL,  KC_BSLS, _______,
         _______, KC_NO,   _______, _______, _______, KC_SPC,  KC_ENT,  _______, _______, _______, KC_NO,   _______,
                                             KC_NO,   KC_NO,   KC_NO,   KC_NO
     ),
@@ -46,9 +46,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 
     [L_PARA] = _LAYOUT(
-        KC_NO,   UG_HUEU, UG_SATU, UG_VALU, KC_NO,   KC_VOLU, LPTOGG,  KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
-        _______, UG_HUED, UG_SATD, UG_VALD, KC_NO,   KC_VOLD, KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   _______,
-        _______, UG_TOGG, RGB_M_P, UG_NEXT, KC_CAPS, KC_MUTE, OMTOGG,  AMTOGG,  KC_NO,   KC_NO,   KC_NO,   _______,
+        KC_NO,   RM_HUEU, RM_SATU, RM_VALU, KC_NO,   KC_VOLU, AMTOGG,  KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
+        _______, RM_HUED, RM_SATD, RM_VALD, KC_NO,   KC_VOLD, OMTOGG,  KC_NO,   KC_NO,   KC_NO,   KC_NO,   _______,
+        _______, RM_TOGG, RM_DEF,  RM_NEXT, KC_CAPS, KC_MUTE, KC_CAPS, LPTOGG,  KC_NO,   KC_NO,   KC_NO,   _______,
         _______, KC_NO,   _______, _______, _______, KC_NO,   KC_NO,   _______, _______, _______, KC_NO,   _______,
                                             KC_NO,   KC_NO,   KC_NO,   KC_NO
     ),

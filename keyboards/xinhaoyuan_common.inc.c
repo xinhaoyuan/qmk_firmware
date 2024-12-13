@@ -27,6 +27,7 @@ enum keycodes {
     LPTOGG,
     AMTOGG,  // Alternative Mod
     OMTOGG,  // Oneshot Mod
+    RM_DEF,  // Set RGB matrix to default
 };
 
 static uint16_t pressed_keycode = KC_NO;
@@ -273,6 +274,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return false;
     case OMTOGG:
         if (record->event.pressed) my_oneshot_mod_enabled = !my_oneshot_mod_enabled;
+        return false;
+    case RM_DEF:
+        if (rgb_matrix_is_enabled()) {
+#ifdef ENABLE_RGB_MATRIX_SOLID_MULTISPLASH
+            rgb_matrix_mode(RGB_MATRIX_SOLID_MULTISPLASH);
+#else
+            rgb_matrix_mode(RGB_MATRIX_SOLID_COLOR);
+#endif
+        }
         return false;
     }
     return true;
