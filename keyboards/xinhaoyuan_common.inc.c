@@ -276,6 +276,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         if (record->event.pressed) my_oneshot_mod_enabled = !my_oneshot_mod_enabled;
         return false;
     case RM_DEF:
+#ifdef RGB_MATRIX_ENABLE
         if (rgb_matrix_is_enabled()) {
 #ifdef ENABLE_RGB_MATRIX_SOLID_MULTISPLASH
             rgb_matrix_mode(RGB_MATRIX_SOLID_MULTISPLASH);
@@ -283,7 +284,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             rgb_matrix_mode(RGB_MATRIX_SOLID_COLOR);
 #endif
         }
+#endif
         return false;
+    case CW_TOGG:
+        if (record->event.pressed && get_mods() & MOD_MASK_SHIFT) {
+            register_code(KC_CAPS_LOCK);
+            unregister_code(KC_CAPS_LOCK);
+            return false;
+        }
+        break;
     }
     return true;
 #undef IS_TAPPING
