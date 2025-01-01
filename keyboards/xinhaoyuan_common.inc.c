@@ -97,6 +97,19 @@ static void mm_unregister(int index) {
     update_para_layer();
 }
 
+void get_feature_chars(char* output, size_t output_size) {
+    size_t index = 0;
+    if (my_alt_mod_enabled && index < output_size) {
+        output[index++] = 'A';
+    }
+    if (my_oneshot_mod_enabled && index < output_size) {
+        output[index++] = 'O';
+    }
+    while (index < output_size) {
+        output[index++] = ' ';
+    }
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     const uint16_t llast_pressed_keycode = last_pressed_keycode;
     last_pressed_keycode = pressed_keycode;
