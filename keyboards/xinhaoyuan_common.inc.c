@@ -97,13 +97,16 @@ static void mm_unregister(int index) {
     update_para_layer();
 }
 
-void get_feature_chars(char* output, size_t output_size) {
+void get_toggle_chars(char* output, size_t output_size) {
     size_t index = 0;
     if (my_alt_mod_enabled && index < output_size) {
         output[index++] = 'A';
     }
     if (my_oneshot_mod_enabled && index < output_size) {
         output[index++] = 'O';
+    }
+    if (is_caps_word_on()) {
+        output[index++] = 'C';
     }
     while (index < output_size) {
         output[index++] = ' ';
@@ -283,10 +286,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         }
         return false;
     case AMTOGG:
-        if (record->event.pressed) my_alt_mod_enabled = !my_alt_mod_enabled;
+        if (record->event.pressed) {
+            my_alt_mod_enabled = (get_mods() & MOD_MASK_SHIFT) ? 0 : !my_alt_mod_enabled;
+        }
         return false;
     case OMTOGG:
-        if (record->event.pressed) my_oneshot_mod_enabled = !my_oneshot_mod_enabled;
+        if (record->event.pressed) {
+            my_oneshot_mod_enabled = (get_mods() & MOD_MASK_SHIFT) ? 0 : !my_oneshot_mod_enabled;
+        }
         return false;
     case RM_DEF:
 #ifdef RGB_MATRIX_ENABLE
@@ -301,8 +308,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return false;
     case CW_TOGG:
         if (record->event.pressed && get_mods() & MOD_MASK_SHIFT) {
-            register_code(KC_CAPS_LOCK);
-            unregister_code(KC_CAPS_LOCK);
+            caps_word_off();
             return false;
         }
         break;

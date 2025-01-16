@@ -5,11 +5,11 @@
 uint16_t last_repos_time = 0;
 uint8_t repos_lines = 0;
 
-__attribute__((weak)) void get_feature_chars(char* output, size_t output_size);
+__attribute__((weak)) void get_toggle_chars(char* output, size_t output_size);
 
 void render_layer_state(void) {
     #define TOTAL_LINES 15
-    const int lines = 3 + 3 + (get_feature_chars ? 2 : 0);
+    const int lines = 3 + 3 + (get_toggle_chars ? 2 : 0);
     if (last_repos_time == 0 || timer_elapsed(last_repos_time) > 10000) {
         last_repos_time = timer_read();
         repos_lines = rand() % (TOTAL_LINES - lines + 1);
@@ -49,10 +49,10 @@ void render_layer_state(void) {
     for (uint8_t l = 4; l < 8; ++l) {
         oled_write_char(mod_chars[l], mods & mod_masks[l]);
     }
-    if (get_feature_chars) {
-        oled_write_P(PSTR("Feat "), true);
+    if (get_toggle_chars) {
+        oled_write_P(PSTR("Togg "), true);
         char feats[6];
-        get_feature_chars(feats, 5);
+        get_toggle_chars(feats, 5);
         feats[5] = 0;
         oled_write(feats, false);
     }
